@@ -49,6 +49,30 @@ jobs:
             npm install
             npm run test
 
+  analyse-frontend:
+    docker:
+      - image: cimg/node:13.8.0
+      steps:
+        - checkout
+        - run:
+            name: Analyse frontend
+            command: |
+              cd frontend
+              npm install
+              npm audit --audit-level=critical
+
+  analyse-backend:
+    docker:
+      - image: cimg/node:13.8.0
+      steps:
+        - checkout
+        - run:
+            name: Analyse backend
+            command: |
+              cd frontend
+              npm install
+              npm audit --audit-level=critical
+
 workflows:
   default:
     jobs:
@@ -60,3 +84,9 @@ workflows:
       - test-backend:
           requires:
             - build-backend
+      - analyse-frontend:
+        requires:
+          - test-frontend
+    - analyse-backend:
+        requires:
+          - test-backend
