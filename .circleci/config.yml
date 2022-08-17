@@ -12,24 +12,34 @@ jobs:
             cd frontend
             npm install
             npm run build
+      - save_cache:
+          paths: [frontend/node_modules]
+          key: frontend-build
 
   build-backend:
     docker:
       - image: cimg/node:13.8.0
     steps:
       - checkout
+      - restore_cache:
+          keys: [backend-build]
       - run:
           name: Build Backend
           command: |
             cd backend
             npm install
             npm run build
+      - save_cache:
+          paths: [backend/node_modules]
+          key: backend-build
 
   test-frontend:
     docker:
       - image: cimg/node:13.8.0
     steps:
       - checkout
+      - restore_cache:
+          keys: [frontend-build]
       - run:
           name: Test Frontend
           command: |
@@ -39,9 +49,11 @@ jobs:
 
   test-backend:
     docker:
-      - image: cimg/node:13.8.0
+                  - image: cimg/node:13.8.0
     steps:
       - checkout
+      - restore_cache:
+          keys: [frontend-build]
       - run:
           name: Test Backend
           command: |
@@ -59,7 +71,7 @@ jobs:
           command: |
             cd frontend
             npm install
-            npm audit fix --audit-level=critical
+            npm audit fix --audit-level=critical --force
             npm audit --audit-level=critical
 
   scan-backend:
@@ -70,9 +82,9 @@ jobs:
       - run:
           name: Scan Backend Dependencies
           command: |
-            cd frontend
+            cd backend
             npm install
-            npm audit fix --audit-level=critical
+            npm audit fix --audit-level=critical --force
             npm audit --audit-level=critical
 
 workflows:
