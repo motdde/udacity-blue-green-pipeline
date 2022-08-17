@@ -7,25 +7,56 @@ jobs:
     steps:
       - checkout
       - run:
-          name: build frontend
+          name: Build Frontend
           command: |
             cd frontend
             npm install
             npm run build
+
   build-backend:
     docker:
       - image: cimg/node:13.8.0
     steps:
       - checkout
       - run:
-          name: build backend
+          name: Build Backend
           command: |
             cd backend
             npm install
             npm run build
+
+  test-frontend:
+    docker:
+      - image: cimg/node:13.8.0
+    steps:
+      - checkout
+      - run:
+          name: Test Frontend
+          command: |
+            cd frontend
+            npm install
+            npm run test
+
+  test-backend:
+    docker:
+      - image: cimg/node:13.8.0
+    steps:
+      - checkout
+      - run:
+          name: Test Backend
+          command: |
+            cd backend
+            npm install
+            npm run test
 
 workflows:
   default:
     jobs:
       - build-frontend
       - build-backend
+      - test-frontend:
+          requires:
+            - build-frontend
+      - test-backend:
+          requires:
+            - build-backend
