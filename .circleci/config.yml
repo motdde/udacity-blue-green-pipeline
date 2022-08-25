@@ -406,6 +406,32 @@ jobs:
               echo "Cannot Cleanup"
             fi
 
+  add-prometheus-node-exporter:
+    docker:
+      - image: cimg/aws:2022.06.1
+    steps:
+      - checkout
+      - restore_cache:
+          keys: [backend-build]
+      - add_ssh_keys:
+          fingerprints:
+            - "53:03:72:41:f9:a6:29:1b:18:69:c1:26:f9:fb:e5:19"
+      - run:
+          name: Install dependencies
+          command: |
+            sudo apt update -y
+            sudo apt install tar gzip ansible nodejs npm -y
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Setup Prometheus Node Exporter
+          command: |
+            cd .circleci/ansible
+            cat inventory.txt
+            ansible-playbook -i inventory.txt node-exporter.yml
+      - destroy-environment
+      - revert-migrations
+
 workflows:
   default:
     jobs:
@@ -428,8 +454,10 @@ workflows:
           filters:
             branches:
               only: [prod]
-      - configure-infrastructure:
+      - add-prometheus-node-exporter:
           requires: [deploy-infrastructure]
+      - configure-infrastructure:
+          requires: [deploy-infrastructure, add-prometheus-node-exporter]
       - run-migrations:
           requires: [configure-infrastructure]
       - deploy-frontend:
