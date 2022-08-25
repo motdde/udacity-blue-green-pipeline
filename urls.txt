@@ -1,0 +1,5 @@
+URL01 https://github.com/motdde/udacity-blue-green-pipeline
+URL02 https://udapeople-6c384ab.s3.amazonaws.com/index.html
+URL03 https://d2uz1qbh70hzw7.cloudfront.net/
+URL04 http://34.201.117.2:3030/api/status
+URL05 http://ec2-18-215-158-44.compute-1.amazonaws.com:9090/targets

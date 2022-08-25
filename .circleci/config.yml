@@ -395,6 +395,8 @@ jobs:
       - run:
           name: Remove old stacks and files
           command: |
+            echo OldWorkflowID: "${OldWorkflowID}"
+            export OldWorkflowID=$(curl https://kvdb.io/AHyEFpNsrEfkEr3pkzwuun/OldWorkflowId)
             if [[ "${CIRCLE_WORKFLOW_ID:0:7}" != "${OldWorkflowID}" ]]
             then
               aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
@@ -403,6 +405,32 @@ jobs:
             else
               echo "Cannot Cleanup"
             fi
+
+  add-prometheus-node-exporter:
+    docker:
+      - image: cimg/aws:2022.06.1
+    steps:
+      - checkout
+      - restore_cache:
+          keys: [backend-build]
+      - add_ssh_keys:
+          fingerprints:
+            - "53:03:72:41:f9:a6:29:1b:18:69:c1:26:f9:fb:e5:19"
+      - run:
+          name: Install dependencies
+          command: |
+            sudo apt update -y
+            sudo apt install tar gzip ansible nodejs npm -y
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Setup Prometheus Node Exporter
+          command: |
+            cd .circleci/ansible
+            cat inventory.txt
+            ansible-playbook -i inventory.txt node-exporter.yml
+      - destroy-environment
+      - revert-migrations
 
 workflows:
   default:
@@ -417,14 +445,19 @@ workflows:
             - build-backend
       - scan-frontend:
           requires:
-            - test-frontend
+            - build-frontend
       - scan-backend:
           requires:
-            - test-backend
+            - build-backend
       - deploy-infrastructure:
           requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-      - configure-infrastructure:
+          filters:
+            branches:
+              only: [prod]
+      - add-prometheus-node-exporter:
           requires: [deploy-infrastructure]
+      - configure-infrastructure:
+          requires: [deploy-infrastructure, add-prometheus-node-exporter]
       - run-migrations:
           requires: [configure-infrastructure]
       - deploy-frontend:
